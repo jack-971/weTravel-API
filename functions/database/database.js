@@ -22,7 +22,7 @@ const pool = mysql.createPool({
  */
 function queryDb(sql, parameter, errorMessage) {
     return new Promise(function(resolve,reject) {
-            userAccountInfo = pool.query(sql, [parameter], (err, result) => {
+            userAccountInfo = pool.query(sql, parameter, (err, result) => {
                 if (err) {
                     console.log(errorMessage);
                     reject(err);

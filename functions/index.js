@@ -22,8 +22,8 @@ app.get('/', async(req, res) => {
 });
 
 // Connect routes
-const userRoute = require('./api/routes/user');
-app.use('/user', userRoute);
+const accountProfileRoute = require('./api/routes/account/account-profile');
+app.use('/account-profile', accountProfileRoute);
 
 // Handle invalid routes and any thrown errors
 app.use(errorHandlers.errorHandling.notFound);
