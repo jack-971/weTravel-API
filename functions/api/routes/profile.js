@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const pool = require('../../../database/database');
-const user = require('../../../database/accountData');
+const user = require('../../database/accountData');
 
-const functions = require('firebase-functions');
 
 /**
  * Get the user account information for the given id. Method takes advantage of firebase caching on local CDN.
@@ -13,7 +11,7 @@ router.get('/:id', async(req, res, next) => {
     const id = parseInt(req.params.id);
     try {
         const data = await user.getAccountProfile(id);
-        res.set('Cache-Control', 'public, max-age=300, s-maxage=600'); // remove caching to a method so it is easily updated and only used when wanted.
+        //res.set('Cache-Control', 'public, max-age=300, s-maxage=600'); // remove caching to a method so it is easily updated and only used when wanted.
         res.status(200).json({data});
     } catch (err) {
         next(err);
@@ -22,7 +20,8 @@ router.get('/:id', async(req, res, next) => {
 
 router.patch('/:id', async(req, res, next) => {
     const id = parseInt(req.params.id);
-    const updates = req.query;
+    const updates = req.body;
+    console.log(updates);
     const data = await user.patchAccountProfile(id, updates);
     res.status(200).json({status: 'success'});
 });

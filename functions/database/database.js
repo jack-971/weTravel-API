@@ -7,11 +7,11 @@ const pool = mysql.createPool({
     password: Config.appSettings().database.password,
     database: Config.appSettings().database.database*/
     connectionLimit: 1,
-    //host: '34.89.126.80',
+    host: '34.89.126.80',
     user: 'user_1',//process.env.SQL_USER,
     password: 'user_123',//process.env.SQL_PASSWORD,
     database: 'jmccambridge06',//process.env.SQL_NAME
-    socketPath: '/cloudsql/travel-with-4cd49:europe-west2:csc7057-instance'
+    //socketPath: '/cloudsql/travel-with-4cd49:europe-west2:csc7057-instance'
 });
 
 /**
@@ -24,9 +24,12 @@ function queryDb(sql, parameter, errorMessage) {
     return new Promise(function(resolve,reject) {
             userAccountInfo = pool.query(sql, parameter, (err, result) => {
                 if (err) {
+                    console.log(sql);
+                    console.log(parameter);
                     console.log(errorMessage);
                     reject(err);
                 } else {
+                    console.log(sql + parameter);
                     resolve(result);
                 }
             });

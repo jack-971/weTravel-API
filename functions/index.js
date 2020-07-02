@@ -18,31 +18,17 @@ app.listen(port, () => {
 });
 
 app.get('/', async(req, res) => {
-    res.json({status: 'API is ready to serve in Ulster'});
+    res.json({status: 'API is ready to go'});
 });
 
 // Connect routes
-const accountProfileRoute = require('./api/routes/account/account-profile');
-app.use('/account-profile', accountProfileRoute);
+const profileRoute = require('./api/routes/profile');
+app.use('/profile', profileRoute);
+const usersRoute = require('./api/routes/users');
+app.use('/users', usersRoute);
 
 // Handle invalid routes and any thrown errors
 app.use(errorHandlers.errorHandling.notFound);
 app.use(errorHandlers.errorHandling.handleError);
 
-/*
-app.get('/timestamp', (request, response) => {
-    response.send(`${Date.now()}`);
-});
-
-app.get('/employees', (req, res) => {
-    res.json({ username: 'tester-1' })
-});
-
-app.get('/timestamp-cached', (request, response) => {
-    response.set('Cache-Control', 'public, max-age=300, s-maxage=600');
-    response.send(`${Date.now()}`);
-});*/
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
 exports.app = functions.https.onRequest(app);
