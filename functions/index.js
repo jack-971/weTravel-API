@@ -26,6 +26,9 @@ const profileRoute = require('./api/routes/profile');
 app.use('/profile', profileRoute);
 const usersRoute = require('./api/routes/users');
 app.use('/users', usersRoute);
+const settingsRoute = require('./api/routes/settings');
+app.use('/settings', settingsRoute);
+
 
 // Handle invalid routes and any thrown errors
 app.use(errorHandlers.errorHandling.notFound);

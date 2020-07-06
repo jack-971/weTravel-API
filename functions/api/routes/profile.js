@@ -3,6 +3,19 @@ const router = express.Router();
 
 const user = require('../../database/accountData');
 
+/**
+ * Get the user account information for the given id. Method takes advantage of firebase caching on local CDN.
+ */
+router.get('/admin/:id', async(req, res, next) => {
+    const id = parseInt(req.params.id);
+    try {
+        const data = await user.getAccountAdminProfile(id);
+        //res.set('Cache-Control', 'public, max-age=300, s-maxage=600'); // remove caching to a method so it is easily updated and only used when wanted.
+        res.status(200).json({data});
+    } catch (err) {
+        next(err);
+    }
+});
 
 /**
  * Get the user account information for the given id. Method takes advantage of firebase caching on local CDN.
