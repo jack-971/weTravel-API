@@ -28,6 +28,8 @@ const usersRoute = require('./api/routes/users');
 app.use('/users', usersRoute);
 const settingsRoute = require('./api/routes/settings');
 app.use('/settings', settingsRoute);
+const tripsRoute = require('./api/routes/trips');
+app.use('/trips', tripsRoute);
 
 
 // Handle invalid routes and any thrown errors
