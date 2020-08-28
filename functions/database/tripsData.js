@@ -10,12 +10,20 @@ function getUsersTrips(userId, status) {
     INNER JOIN WT_TripStatus ON WT_TripUsers.TripStatusID = WT_TripStatus.TripStatusID\
     WHERE userID = ? AND TripStatus = ? ORDER BY DateStart IS NULL, DateStart"
     if (status === 'complete') {
+        console.log("complete");
         sql = sql + " DESC;";
     } else {
         sql = sql + ";"
     }
     const parameter = [userId, status];
     const errorMessage = "Error retrieving user trip list from database."
+    return db.queryDb(sql, parameter, errorMessage);
+}
+
+function getActiveTrip(userId) {
+    var sql = "SELECT TripID FROM WT_TripUsers WHERE UserID = ? AND TripStatusID = 2;"
+    const parameter = [userId];
+    const errorMessage = "Error retrieving users active trip from database."
     return db.queryDb(sql, parameter, errorMessage);
 }
 
@@ -47,16 +55,16 @@ function getTripLegs(tripId, userId) {
 }
 
 /**
- * Queries database for a list of activities associated with a trip id.
+ * Queries database for a list of activities associated with a trip id and user id.
  * @param {*} tripId 
  */
 function getLegActivities(tripId, userId) {
     var sql = "SELECT * FROM WT_Activity \
             INNER JOIN WT_LegActivity ON WT_LegActivity.ActivityID = WT_Activity.ID  \
             WHERE WT_LegActivity.LegID IN  \
-            (Select WT_TripLeg.LegID FROM WT_TripLeg INNER JOIN WT_Leg ON WT_TripLeg.LegID = WT_Leg.ID WHERE WT_TripLeg.TripID = ?) \
-            ORDER BY DateStart IS NULL, DateStart;";
-    const parameter = [tripId, tripId, userId];
+            (Select WT_TripLeg.LegID FROM WT_TripLeg INNER JOIN WT_Leg ON WT_TripLeg.LegID = WT_Leg.ID WHERE WT_TripLeg.TripID = ? \
+                AND WT_LegActivity.ActivityUserID = ?) ORDER BY DateStart IS NULL, DateStart;";
+    const parameter = [tripId, userId];
     const errorMessage = "Error retrieving leg activites from database."
     return db.queryDb(sql, parameter, errorMessage);
 }
@@ -68,14 +76,15 @@ function getLegActivities(tripId, userId) {
  */
 function postLeg(userId, updates) {
     const sql = "START TRANSACTION; \
-    INSERT INTO WT_Leg VALUES (NULL, ?, ?, ?, ?, ?, ?); \
+    INSERT INTO WT_Leg VALUES (NULL, ?, ?, ?, ?, ?, ?, ?); \
     SET @last_leg_id = LAST_INSERT_ID(); \
     INSERT INTO WT_TripLeg VALUES (?, @last_leg_id, ?); \
     COMMIT; \
     SELECT * FROM WT_Leg INNER JOIN WT_TripLeg ON WT_Leg.ID = WT_TripLeg.LegID WHERE ID = @last_leg_id;";
-    parameter = [updates.name, db.checkNull(updates.startDate), db.checkNull(updates.finishDate), db.checkNull(updates.description), 
-        db.checkNull(updates.locationID), db.checkNull(updates.locationDetail), userId, updates.trip];
+    parameter = [updates.Name, db.checkNull(updates.DateStart), db.checkNull(updates.DateFinish), db.checkNull(updates.Description), 
+        db.checkNull(updates.LocationID), db.checkNull(updates.LocationDetail), db.checkNull(updates.Review), userId, updates.trip];
     const errorMessage = "Error adding leg to database";
+    console.log("going into db");
     return db.multiqueryDb(sql, parameter, errorMessage);
 }
 
@@ -86,13 +95,13 @@ function postLeg(userId, updates) {
  */
 function postActivity(userId, updates) {
     const sql = "START TRANSACTION; \
-    INSERT INTO WT_Activity VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, NULL); \
+    INSERT INTO WT_Activity VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?); \
     SET @last_activity_id = LAST_INSERT_ID(); \
     INSERT INTO WT_LegActivity VALUES (?, @last_activity_id, ?); \
     COMMIT; \
     SELECT * FROM WT_Activity INNER JOIN WT_LegActivity ON WT_Activity.ID = WT_LegActivity.ActivityID WHERE ID = @last_activity_id;";
-    parameter = [updates.name, db.checkNull(updates.startDate), db.checkNull(updates.finishDate), db.checkNull(updates.description), 
-        db.checkNull(updates.locationID), db.checkNull(updates.locationDetail), db.checkNull(updates.notes), userId, updates.leg];
+    parameter = [updates.Name, db.checkNull(updates.DateStart), db.checkNull(updates.DateFinish), db.checkNull(updates.Description), 
+        db.checkNull(updates.LocationID), db.checkNull(updates.LocationDetail), db.checkNull(updates.Notes), db.checkNull(updates.Review), userId, updates.leg];
     const errorMessage = "Error adding activity to database";
     return db.multiqueryDb(sql, parameter, errorMessage);
 }
@@ -102,11 +111,11 @@ function postActivity(userId, updates) {
  * @param {*} legId 
  * @param {*} updates 
  */
-function patchLeg(legId, updates) {
-    const sql = "UPDATE WT_Leg SET Name = ?, DateStart=?, DateFinish=?, Description=?, LocationID=?, LocationDetail=? \
+function patchLeg(updates) {
+    const sql = "UPDATE WT_Leg SET Name = ?, DateStart=?, DateFinish=?, Description=?, LocationID=?, LocationDetail=?, Review=? \
      WHERE ID = ?;"
-    parameter = [updates.name, db.checkNull(updates.startDate), db.checkNull(updates.finishDate), db.checkNull(updates.description), 
-        db.checkNull(updates.locationID), db.checkNull(updates.locationDetail), legId];
+    parameter = [updates.Name, db.checkNull(updates.DateStart), db.checkNull(updates.DateFinish), db.checkNull(updates.Description), 
+        db.checkNull(updates.LocationID), db.checkNull(updates.LocationDetail), db.checkNull(updates.Review), updates.legId];
     const errorMessage = "Error updating leg in database";
     return db.queryDb(sql, parameter, errorMessage);
 }
@@ -116,11 +125,11 @@ function patchLeg(legId, updates) {
  * @param {*} tripId 
  * @param {*} updates 
  */
-function patchTrip(tripId, updates) {
-    const sql = "UPDATE WT_Trip SET Name = ?, DateStart=?, DateFinish=?, Description=?, LocationID=?, LocationDetail=?, Picture = ? \
+function patchTrip(updates) {
+    const sql = "UPDATE WT_Trip SET Name = ?, DateStart=?, DateFinish=?, Description=?, LocationID=?, LocationDetail=?, Picture = ?, Review=? \
      WHERE ID = ?;"
-    parameter = [updates.name, db.checkNull(updates.startDate), db.checkNull(updates.finishDate), db.checkNull(updates.description), 
-        db.checkNull(updates.locationID), db.checkNull(updates.locationDetail), db.checkNull(updates.picture), tripId];
+    parameter = [updates.Name, db.checkNull(updates.DateStart), db.checkNull(updates.DateFinish), db.checkNull(updates.Description), 
+        db.checkNull(updates.LocationID), db.checkNull(updates.LocationDetail), db.checkNull(updates.Picture), db.checkNull(updates.Review), updates.tripId];
     const errorMessage = "Error updating trip in database";
     return db.queryDb(sql, parameter, errorMessage);
 }
@@ -132,27 +141,31 @@ function patchTrip(tripId, updates) {
  */
 function postTrip(userId, updates) {
     const sql = "START TRANSACTION; \
-    INSERT INTO WT_Trip VALUES (NULL, ?, ?, ?, ?, ?, ?, ?); \
+    INSERT INTO WT_Trip VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?); \
     SET @last_trip_id = LAST_INSERT_ID(); \
     INSERT INTO WT_TripUsers VALUES (?, @last_trip_id, 1); \
     COMMIT; \
     SELECT * FROM WT_Trip WHERE ID = @last_trip_id;";
-    parameter = [updates.name, db.checkNull(updates.picture), db.checkNull(updates.startDate), db.checkNull(updates.finishDate), db.checkNull(updates.description), 
-        db.checkNull(updates.locationID), db.checkNull(updates.locationDetail), userId];
+    parameter = [updates.Name, db.checkNull(updates.Picture), db.checkNull(updates.DateStart), db.checkNull(updates.DateFinish), db.checkNull(updates.Description), 
+        db.checkNull(updates.LocationID), db.checkNull(updates.LocationDetail), db.checkNull(updates.Review), userId];
     const errorMessage = "Error updating trip in database";
     return db.multiqueryDb(sql, parameter, errorMessage);
 }
+
+// post trip post, leg post, activity post
+// patch trip post, leg post, activity post
 
 /**
  * 
  * @param {*} activityId 
  * @param {*} updates 
  */
-function patchActivity(activityId, updates) {
-    const sql = "UPDATE WT_Activity SET Name = ?, DateStart=?, DateFinish=?, Description=?, LocationID=?, LocationDetail=?, \
-                 Notes = ? WHERE ID = ?;"
+function patchActivity(updates) {
+    const sql = "UPDATE WT_Activity SET Name = ?, DateStart=?, DateFinish=?, Description=?, LocationID=?, LocationDetail=?,  \
+                 Notes = ?, Review=? WHERE ID = ?;"
     parameter = [updates.name, db.checkNull(updates.startDate), db.checkNull(updates.finishDate), db.checkNull(updates.description), 
-        db.checkNull(updates.locationID), db.checkNull(updates.locationDetail), db.checkNull(updates.notes), activityId];
+        db.checkNull(updates.locationID), db.checkNull(updates.locationDetail), db.checkNull(updates.notes), db.checkNull(updates.review), 
+        updates.activityId];
     const errorMessage = "Error updating activity in database";
     return db.queryDb(sql, parameter, errorMessage);
 }
@@ -238,6 +251,97 @@ function removeActivityUser(userId, activityId) {
     return db.queryDb(sql, parameter, errorMessage);
 }
 
+/**
+ * Updates a trips status for a given user.
+ * @param {*} userId 
+ * @param {*} tripId 
+ * @param {*} statusId 
+ */
+function patchTripActive(userId, tripId) {
+    const sql = "UPDATE WT_TripUsers SET TripStatusID = 2 WHERE UserID = ? AND TripID = ?;"
+    parameter = [userId, tripId];
+    const errorMessage = "Error activating trip in database";
+    return db.queryDb(sql, parameter, errorMessage);
+}
+
+/**
+ * Updates an active trip for a given user if there is one by checking for the userId and if there is a status id equal to active.
+ * @param {*} userId 
+ * @param {*} tripId 
+ * @param {*} statusId 
+ */
+function patchTripComplete(userId) {
+    console.log("patching trip to completeeee");
+    const sql = "UPDATE WT_TripUsers SET TripStatusID = 3 WHERE UserID = ? AND TripStatusID = 2;"
+    parameter = [userId];
+    const errorMessage = "Error completing trip in database";
+    return db.queryDb(sql, parameter, errorMessage);
+    
+}
+
+/**
+ * Posts a trip post in the database.
+ * @param {*} userId 
+ * @param {*} tripId 
+ * @param {*} tripDetails 
+ */
+function postTripPost(userId, tripId, details) {
+    const sql = "INSERT INTO WT_TripPost VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    parameter = [tripId, userId, details.Name, db.checkNull(details.Picture), db.checkNull(details.DateStart), 
+        db.checkNull(details.DateFinish), db.checkNull(details.Description), db.checkNull(details.LocationID), 
+        db.checkNull(details.LocationDetail), db.checkNull(details.Review)];
+    const errorMessage = "Error posting trip post in database";
+    console.log("about to req db");
+    return db.multiqueryDb(sql, parameter, errorMessage);
+}
+
+function postLegPost(userId, legId, details) {
+    const sql = "INSERT INTO WT_LegPost VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    parameter = [legId, userId, details.Name, db.checkNull(details.DateStart), 
+        db.checkNull(details.DateFinish), db.checkNull(details.Description), db.checkNull(details.LocationID), 
+        db.checkNull(details.LocationDetail), db.checkNull(details.Review)];
+    const errorMessage = "Error posting leg post in database";
+    return db.multiqueryDb(sql, parameter, errorMessage);
+}
+
+function postActivityPost(userId, activityId, details) {
+    const sql = "INSERT INTO WT_ActivityPost VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?);"; 
+    parameter = [activityId, userId, details.Name, db.checkNull(details.DateStart), 
+        db.checkNull(details.DateFinish), db.checkNull(details.Description), db.checkNull(details.LocationID), 
+        db.checkNull(details.LocationDetail), db.checkNull(details.Notes), db.checkNull(details.Review)];
+    const errorMessage = "Error posting activity post in database";
+    return db.multiqueryDb(sql, parameter, errorMessage);
+}
+
+function patchTripPost(userId, updates) {
+    const sql = "UPDATE WT_TripPost SET Name = ?, DateStart=?, DateFinish=?, Description=?, LocationID=?, LocationDetail=?, Picture = ?, Review=? \
+     WHERE ID = ? AND UserID = ?;"
+    parameter = [updates.Name, db.checkNull(updates.DateStart), db.checkNull(updates.DateFinish), db.checkNull(updates.Description), 
+        db.checkNull(updates.LocationID), db.checkNull(updates.LocationDetail), db.checkNull(updates.Picture), db.checkNull(updates.Review), 
+        updates.tripId, userId];
+    const errorMessage = "Error updating trip post in database";
+    return db.queryDb(sql, parameter, errorMessage);
+}
+
+function patchLegPost(userId, updates) {
+    const sql = "UPDATE WT_LegPost SET Name = ?, DateStart=?, DateFinish=?, Description=?, LocationID=?, LocationDetail=?, Review=? \
+     WHERE ID = ? AND UserID = ?;"
+    parameter = [updates.Name, db.checkNull(updates.DateStart), db.checkNull(updates.DateFinish), db.checkNull(updates.Description), 
+        db.checkNull(updates.LocationID), db.checkNull(updates.LocationDetail), db.checkNull(updates.Review), updates.legId, userId];
+    const errorMessage = "Error updating leg post in database";
+    return db.queryDb(sql, parameter, errorMessage);
+}
+
+function patchActivityPost(userId, updates) {
+    const sql = "UPDATE WT_ActivityPost SET Name = ?, DateStart=?, DateFinish=?, Description=?, LocationID=?, LocationDetail=?,  \
+                 Notes = ?, Review=? WHERE ID = ? AND UserID = ?;"
+    parameter = [updates.Name, db.checkNull(updates.DateStart), db.checkNull(updates.DateFinish), db.checkNull(updates.Description), 
+        db.checkNull(updates.LocationID), db.checkNull(updates.LocationDetail), db.checkNull(updates.Notes), db.checkNull(updates.Review), 
+        updates.activityId, userId];
+    const errorMessage = "Error updating activity post in database";
+    return db.queryDb(sql, parameter, errorMessage);
+}
+
 module.exports = {
     getUsersTrips,
     getTripUsers,
@@ -254,5 +358,14 @@ module.exports = {
     removeActivityUser,
     postTrip,
     postLeg,
-    postActivity
+    postActivity,
+    getActiveTrip,
+    patchTripActive,
+    patchTripComplete,
+    postTripPost,
+    postLegPost,
+    postActivityPost,
+    patchTripPost,
+    patchLegPost,
+    patchActivityPost
 }

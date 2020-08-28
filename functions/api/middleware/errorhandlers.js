@@ -9,6 +9,7 @@ exports.errorHandling = {
     handleError: function(error, req, res, next) {
         res.status(error.status || 500);
         console.log("handle error")
+        console.log(error);
         res.json({
             error: {
                 message: error.message

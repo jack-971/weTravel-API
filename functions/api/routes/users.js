@@ -4,7 +4,7 @@ const router = express.Router();
 const user = require('../../database/usersData');
 
 /**
- * Get the user account information for the given id. Method takes advantage of firebase caching on local CDN.
+ * Get the user account information for the given id. 
  */
 router.get('/:id', async(req, res, next) => {
     const id = parseInt(req.params.id);

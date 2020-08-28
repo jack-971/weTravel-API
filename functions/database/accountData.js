@@ -2,9 +2,9 @@ const db = require('./database');
 const { param } = require('../api/routes/profile');
 
 function getAccountAdminProfile(userId) {
-    const sql = 'SELECT WT_UserProfile.UserID, Name, ProfilePicture, HomeLocation, CurrentLocation, Description, Dob, Username, Private, Locations, Notifications FROM WT_UserProfile \
+    const sql = 'SELECT WT_UserProfile.UserID, Name, ProfilePicture, HomeLocation, Description, Dob, Username, Private, Locations, Notifications FROM WT_UserProfile \
                 INNER JOIN WT_Login ON  WT_UserProfile.UserID = WT_Login.UserID \
-                INNER JOIN WT_Setttings ON WT_UserProfile.UserID = WT_Setttings.UserID \
+                INNER JOIN WT_Settings ON WT_UserProfile.UserID = WT_Settings.UserID \
                 WHERE WT_UserProfile.UserID = ?;'
     const parameter = userId;
     const errorMessage = "Error retrieving admin user from database."
@@ -12,9 +12,9 @@ function getAccountAdminProfile(userId) {
 }
 
 function getAccountProfile(userId) {
-    const sql = 'SELECT WT_UserProfile.UserID, Name, ProfilePicture, HomeLocation, CurrentLocation, Description, Dob, Username, Private FROM WT_UserProfile \
+    const sql = 'SELECT WT_UserProfile.UserID, Name, ProfilePicture, HomeLocation, Description, Dob, Username, Private FROM WT_UserProfile \
                 INNER JOIN WT_Login ON  WT_UserProfile.UserID = WT_Login.UserID \
-                INNER JOIN WT_Setttings ON WT_UserProfile.UserID = WT_Setttings.UserID \
+                INNER JOIN WT_Settings ON WT_UserProfile.UserID = WT_Settings.UserID \
                 WHERE WT_UserProfile.UserID = ?;'
     const parameter = userId;
     const errorMessage = "Error retrieving user from database."

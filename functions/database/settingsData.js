@@ -6,7 +6,7 @@ const { param } = require('../api/routes/settings');
  * @param {*} userId 
  */
 function getSettings(userId, update) {
-    const sql = "SELECT Private, Notifications, Locations FROM WT_Setttings WHERE UserID = ?;"
+    const sql = "SELECT Private, Notifications, Locations FROM WT_Settings WHERE UserID = ?;"
     console.log("in set");
     const parameter = userId;
     const errorMessage = "Error getting privacy settings"
@@ -26,7 +26,7 @@ function updatePrivacy(userId, update, type) {
     } else if (type === "notifications") {
         setting = "Notifications";
     }
-    const sql = "UPDATE WT_Setttings SET " + setting + " = ? WHERE UserID = ?;"
+    const sql = "UPDATE WT_Settings SET " + setting + " = ? WHERE UserID = ?;"
     const parameter = [update, userId];
     const errorMessage = "Error updating privacy setting"
     return db.queryDb(sql, parameter, errorMessage);

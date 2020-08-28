@@ -79,14 +79,23 @@ function multiqueryDb(sql, parameter, errorMessage) {
  * @param {*} field 
  */
 function checkNull(field) {
+    //console.log("fieleddd");
+    //console.log(field);
     if (field == null) {
         return field;
     } else {
-        if (field.trim() === "" || field === "null") {
-            return null;
-        } else {
-            return field;
+        // check if a number (taken from db instead of from device)
+        if (typeof(field) === 'string') {
+            //console.log("is not a number");
+            if (field.trim() === "" || field === "null") {
+                return null;
+            } else {
+                //console.log("not a number but not field");
+                return field;
+            }
         }
+        //console.log("is a number");
+        return field;
     }
 
 }

@@ -12,6 +12,7 @@ app.use(bodyParser.json());
 
 const errorHandlers = require('./api/middleware/errorhandlers');
 
+
 const port = process.env.PORT || 8080;
 app.listen(port, () => {
     console.log('REST API listening on PORT '+port);
@@ -22,14 +23,22 @@ app.get('/', async(req, res) => {
 });
 
 // Connect routes
+const loginRoute = require('./api/routes/login');
+app.use('/login', loginRoute);
+const registerRoute = require('./api/routes/register');
+app.use('/register', registerRoute);
+
+const authorization = require('./api/middleware/authorization');
+app.use("/secure", authorization);
+
 const profileRoute = require('./api/routes/profile');
-app.use('/profile', profileRoute);
+app.use('/secure/profile', profileRoute);
 const usersRoute = require('./api/routes/users');
-app.use('/users', usersRoute);
+app.use('/secure/users', usersRoute);
 const settingsRoute = require('./api/routes/settings');
-app.use('/settings', settingsRoute);
+app.use('/secure/settings', settingsRoute);
 const tripsRoute = require('./api/routes/trips');
-app.use('/trips', tripsRoute);
+app.use('/secure/trips', tripsRoute);
 
 
 // Handle invalid routes and any thrown errors
